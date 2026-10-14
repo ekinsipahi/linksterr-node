@@ -57,7 +57,8 @@ void usage() {
         "  --key KEY          node key from your Linksterr dashboard (repeat for more accounts)\n"
         "  --label NAME       a name for the last --key, shown in the log only\n"
         "  --config FILE      read settings and [account] sections from an INI file\n"
-        "  --accept-terms     record that you accept the terms (needed once; unattended use)\n"
+        "  --agree            record that you accept the terms (needed once; unattended use)\n"
+        "                     (--accept-terms is the same)\n"
         "  --withdraw         delete your acceptance and this PC's device identities, then exit\n"
         "  --max-streams N    concurrent connections to carry (1-64, default 16)\n"
         "  --server URL       coordinator (default wss://node.ipsterr.com)\n"
@@ -133,7 +134,7 @@ bool parse_args(int argc, wchar_t** argv, Options& o, std::string& err) {
             o.accounts.back().label = v;
         }
         else if (a == "--config") { if (!next(v)) return false; if (!load_config(o, v, err)) return false; }
-        else if (a == "--accept-terms") o.accept_terms = true;
+        else if (a == "--accept-terms" || a == "--agree") o.accept_terms = true;
         else if (a == "--withdraw") o.withdraw = true;
         else if (a == "--max-streams") { if (!next(v)) return false; o.cfg.max_streams = atoi(v.c_str()); }
         else if (a == "--server") { if (!next(v)) return false; o.cfg.server = v; }
@@ -187,7 +188,7 @@ bool obtain_consent(const Options& o) {
         return true;
     }
     if (!_isatty(_fileno(stdin))) {
-        fprintf(stderr, "No terms acceptance on record. Run once interactively, or pass --accept-terms "
+        fprintf(stderr, "No terms acceptance on record. Run once interactively, or pass --agree "
                         "if you have read and accept the terms above.\n");
         return false;
     }

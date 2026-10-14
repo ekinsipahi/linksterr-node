@@ -9,8 +9,8 @@ linksterr-node.exe --key lnn_xxxxxxxx
 ```
 
 The first run shows what the program does and asks you to type `I AGREE`.
-Unattended use (a batch file, Task Scheduler) passes `--accept-terms` after you
-have read the [terms and privacy notice](https://linksterr.com/node-terms/).
+Unattended use (a batch file, Task Scheduler) passes `--agree` after you have
+read the [terms and privacy notice](https://linksterr.com/node-terms/).
 
 ## What it does
 
@@ -39,7 +39,8 @@ linksterr-node.exe --config node.ini [options]
   --key KEY          node key from your Linksterr dashboard (repeat for more accounts)
   --label NAME       a name for the last --key, shown in the log only
   --config FILE      read settings and [account] sections from an INI file
-  --accept-terms     record that you accept the terms (needed once; unattended use)
+  --agree            record that you accept the terms (needed once; unattended use)
+                     (--accept-terms is the same)
   --withdraw         delete your acceptance and this PC's device identities, then exit
   --max-streams N    concurrent connections to carry (1-64, default 16)
   --server URL       coordinator (default wss://node.ipsterr.com)
@@ -53,7 +54,7 @@ batch file can be as short as:
 
 ```bat
 set LINKSTERR_NODE_KEY=lnn_xxxxxxxx
-linksterr-node.exe --accept-terms
+linksterr-node.exe --agree
 ```
 
 Several accounts in one process: repeat `--key`, or use a config file
