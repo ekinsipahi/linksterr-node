@@ -30,7 +30,7 @@ struct NodeConfig {
     std::string pool = "linksterr";  // "" = plain SDK mode (needs api_key)
     std::string api_key;             // SDK mode only
     std::string app_id = "com.linksterr.node";
-    std::string version = "1.0.0";
+    std::string version = "1.1.0";
     std::wstring data_dir;
 };
 

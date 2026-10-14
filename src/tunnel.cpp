@@ -200,9 +200,14 @@ void Tunnel::handle_text(const std::string& text, SessionEnd& end, int& retry_af
     std::string message = v.get_string("message", code);
     int retry = (int)v.get_number("retryAfterS", 0);
     if (retry > 0) {
-        // Not a verdict on this account, just "not now" — e.g. another device on
-        // this internet connection is already contributing (one IP earns once).
-        LOGW(tag_.c_str(), "%s", message.c_str());
+        // Not a verdict on this account, just "not now": the pool has no slot
+        // for this country at the moment (shown in red, as the owner asked —
+        // it is the one message a user must not miss), or another PC on this
+        // internet connection already holds the slot (yellow). Either way we
+        // keep retrying on our own; the user does nothing.
+        bool no_slot = code == "country_full" || v.get_string("level") == "warn";
+        util::log_painted(util::Level::Warn, no_slot ? util::Paint::Red : util::Paint::Yellow,
+                          tag_.c_str(), "%s", message.c_str());
         retry_after_s = std::clamp(retry, 5, 3600);
         end = SessionEnd::RetryAfter;
         return;

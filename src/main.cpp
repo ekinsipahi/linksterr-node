@@ -28,7 +28,7 @@
 
 namespace {
 
-constexpr const char* VERSION = "1.0.0";
+constexpr const char* VERSION = "1.1.0";
 constexpr int TERMS_VERSION = 1;
 constexpr const char* TERMS_URL = "https://linksterr.com/node-terms/";
 

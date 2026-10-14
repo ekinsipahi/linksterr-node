@@ -20,6 +20,10 @@ enum class Level { Debug = 0, Info = 1, Warn = 2, Error = 3 };
 extern Level g_level;
 
 void log(Level level, const char* tag, const char* fmt, ...);
+// Same as log(), but the body is painted in colour on a real console (red for
+// "the coordinator says no for now", yellow for "another PC has your slot").
+enum class Paint { Red, Yellow };
+void log_painted(Level level, Paint paint, const char* tag, const char* fmt, ...);
 
 std::wstring widen(const std::string& utf8);
 std::string narrow(const std::wstring& wide);

@@ -1,3 +1,9 @@
+## linksterr-node 1.1.0
+
+- **Country capacity messages.** The network admits a limited number of PCs per country and grows that number where customers ask for exits. When your country is full the program now says so **in red** — *"We don't need a new node PC in your country right now…"* — and keeps retrying on its own (every 15 minutes). Leave it running: you start earning the moment you are admitted, and staying online keeps your place.
+- A second PC on the same internet connection is told, in yellow, that the connection is already contributing and retries later.
+- `--agree` records your acceptance of the terms for unattended use (same as `--accept-terms`).
+
 ## linksterr-node 1.0.0
 
 First release of the Windows client for **Earn with your PC** on Linksterr.

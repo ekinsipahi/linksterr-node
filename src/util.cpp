@@ -11,6 +11,23 @@ Level g_level = Level::Info;
 
 static std::mutex g_log_mu;
 
+static void emit(Level level, const char* tag, const char* body, WORD colour) {
+    static const char* names[] = {"DEBUG", "INFO ", "WARN ", "ERROR"};
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    std::lock_guard<std::mutex> lock(g_log_mu);
+    HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO info{};
+    bool painted = colour && GetConsoleScreenBufferInfo(con, &info);  // false when redirected to a file
+    fprintf(stderr, "%02d:%02d:%02d %s [%s] ", st.wHour, st.wMinute, st.wSecond,
+            names[static_cast<int>(level)], tag);
+    fflush(stderr);
+    if (painted) SetConsoleTextAttribute(con, colour);
+    fprintf(stderr, "%s\n", body);
+    fflush(stderr);
+    if (painted) SetConsoleTextAttribute(con, info.wAttributes);
+}
+
 void log(Level level, const char* tag, const char* fmt, ...) {
     if (level < g_level) return;
     char body[2048];
@@ -18,13 +35,19 @@ void log(Level level, const char* tag, const char* fmt, ...) {
     va_start(ap, fmt);
     vsnprintf(body, sizeof body, fmt, ap);
     va_end(ap);
-    static const char* names[] = {"DEBUG", "INFO ", "WARN ", "ERROR"};
-    SYSTEMTIME st;
-    GetLocalTime(&st);
-    std::lock_guard<std::mutex> lock(g_log_mu);
-    fprintf(stderr, "%02d:%02d:%02d %s [%s] %s\n", st.wHour, st.wMinute, st.wSecond,
-            names[static_cast<int>(level)], tag, body);
-    fflush(stderr);
+    emit(level, tag, body, 0);
+}
+
+void log_painted(Level level, Paint paint, const char* tag, const char* fmt, ...) {
+    if (level < g_level) return;
+    char body[2048];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(body, sizeof body, fmt, ap);
+    va_end(ap);
+    WORD colour = paint == Paint::Red ? (FOREGROUND_RED | FOREGROUND_INTENSITY)
+                                      : (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    emit(level, tag, body, colour);
 }
 
 std::wstring widen(const std::string& utf8) {

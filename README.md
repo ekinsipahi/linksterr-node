@@ -27,6 +27,9 @@ with Proxysterr). Websites reached that way see your connection's IP address.
 * You earn a fixed amount per connection per day, shown in your dashboard, for
   days the connection actually relayed traffic; the amount is scaled by the
   time the PC was online.
+* Admission is per country: when your country already has enough PCs the
+  program says so in red and retries by itself; once admitted, stay online to
+  keep your place.
 * Stop any time with Ctrl+C or by closing the window. `--withdraw` deletes the
   acceptance and this PC's device identity.
 
