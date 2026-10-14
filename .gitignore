@@ -1,0 +1,6 @@
+build/
+dist/
+*.obj
+*.exe
+*.pdb
+node.ini

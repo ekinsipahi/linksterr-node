@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.20)
+project(linksterr-node CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_executable(linksterr-node
+    src/util.cpp src/json.cpp src/net.cpp src/ws.cpp src/tunnel.cpp src/main.cpp)
+target_compile_definitions(linksterr-node PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_link_libraries(linksterr-node PRIVATE winhttp ws2_32)
+if(MSVC)
+    set_property(TARGET linksterr-node PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    target_compile_options(linksterr-node PRIVATE /W4 /EHsc)
+endif()
