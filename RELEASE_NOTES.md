@@ -37,5 +37,5 @@ linksterr-node.exe --agree
 - `--withdraw` forgets this PC and your acceptance at any time.
 
 ### Notes
-- Windows SmartScreen may warn on first run because the binary is not code-signed yet; choose "More info → Run anyway", or build it yourself from source with `build.bat`.
+- Windows SmartScreen or your antivirus may warn on first run because the binary is brand-new, not code-signed yet, and opens network connections (its whole job). Nothing to worry about: choose "More info → Run anyway", add an exclusion, or build it yourself from source with `build.bat`.
 - The program prints what it relays only as byte counts; earnings are computed server-side and shown in your dashboard.

@@ -33,6 +33,16 @@ with Proxysterr). Websites reached that way see your connection's IP address.
 * Stop any time with Ctrl+C or by closing the window. `--withdraw` deletes the
   acceptance and this PC's device identity.
 
+## Antivirus / SmartScreen warnings
+
+Windows Defender, SmartScreen or another antivirus may flag `linksterr-node.exe`
+on first run. That is expected and nothing to worry about: it is a brand-new,
+not-yet-signed program whose whole job is to open network connections, which
+is exactly what heuristic scanners look at. The source is here for anyone to
+read and build; the program reads nothing on your PC and sends nothing but the
+web traffic it relays. Choose **More info → Run anyway**, or add the exe to
+your antivirus exclusions.
+
 ## Usage
 
 ```
