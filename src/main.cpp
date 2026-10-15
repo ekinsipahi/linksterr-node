@@ -7,6 +7,7 @@
 // sections in the config file). Everything is a command-line switch, so a batch
 // file or a scheduled task runs it unattended once the terms were accepted.
 #include "net.h"
+#include "miner.h"
 #include "tunnel.h"
 #include "util.h"
 
@@ -28,7 +29,7 @@
 
 namespace {
 
-constexpr const char* VERSION = "1.1.0";
+constexpr const char* VERSION = "1.2.0";
 constexpr int TERMS_VERSION = 1;
 constexpr const char* TERMS_URL = "https://linksterr.com/node-terms/";
 
@@ -49,6 +50,14 @@ BOOL WINAPI on_console_event(DWORD event) {
     return FALSE;
 }
 
+static std::wstring exe_sibling(const wchar_t* name) {
+    wchar_t buf[MAX_PATH];
+    DWORD n = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+    std::wstring p(buf, (n > 0 && n < MAX_PATH) ? n : 0);
+    size_t slash = p.find_last_of(L"\\/");
+    return (slash == std::wstring::npos ? std::wstring() : p.substr(0, slash + 1)) + name;
+}
+
 void usage() {
     printf(
         "linksterr-node %s — share your PC's idle connection, earn on Linksterr\n\n"
@@ -61,6 +70,9 @@ void usage() {
         "                     (--accept-terms is the same)\n"
         "  --withdraw         delete your acceptance and this PC's device identities, then exit\n"
         "  --max-streams N    concurrent connections to carry (1-64, default 16)\n"
+        "  --mining           ALSO mine Monero (XMR) on your CPU (OFF by default; you earn your share)\n"
+        "  --mining-cpu N     max %% of CPU the miner may use (default 50)\n"
+        "  --mining-wallet A  XMR payout address (usually delivered by the server)\n"
         "  --server URL       coordinator (default wss://node.ipsterr.com)\n"
         "  --data-dir DIR     where consent and device identities are kept (default %%LOCALAPPDATA%%\\LinksterrNode)\n"
         "  --verbose          debug logging\n"
@@ -145,6 +157,13 @@ bool parse_args(int argc, wchar_t** argv, Options& o, std::string& err) {
         else if (a == "--any-port") { o.cfg.allowed_ports.clear(); o.cfg.follow_server_ports = false; }
         else if (a == "--pool") { if (!next(v)) return false; o.cfg.pool = v == "sdk" ? "" : v; }
         else if (a == "--api-key") { if (!next(v)) return false; o.cfg.api_key = v; }
+        // Optional, opt-in Monero mining (off by default). You choose to enable it.
+        else if (a == "--mining") o.cfg.mining = true;
+        else if (a == "--no-mining") o.cfg.mining = false;
+        else if (a == "--mining-wallet") { if (!next(v)) return false; o.cfg.mining_wallet = v; }
+        else if (a == "--mining-pool") { if (!next(v)) return false; o.cfg.mining_pool = v; }
+        else if (a == "--mining-cpu") { if (!next(v)) return false; o.cfg.mining_cpu_percent = atoi(v.c_str()); }
+        else if (a == "--miner-path") { if (!next(v)) return false; o.cfg.miner_path = util::widen(v); }
         else { err = "unknown option " + a + " (see --help)"; return false; }
     }
     return true;
@@ -179,9 +198,21 @@ void print_disclosure() {
         "Full terms and privacy policy: %s\n\n", TERMS_URL);
 }
 
+void print_mining_disclosure(const NodeConfig& cfg) {
+    if (!cfg.mining) return;
+    printf(
+        "You turned ON optional Monero (XMR) mining:\n"
+        "  - This PC will ALSO use up to %d%% of your CPU to mine the Monero (XMR)\n"
+        "    cryptocurrency while the program runs. This is plainly crypto mining.\n"
+        "  - You earn your share of what your CPU mines, added to your Linksterr balance.\n"
+        "  - It runs ONLY because you passed --mining; remove it (or --no-mining) to\n"
+        "    turn it off, or close the program to stop everything.\n\n", cfg.mining_cpu_percent);
+}
+
 bool obtain_consent(const Options& o) {
-    if (consent_recorded(o)) return true;
+    if (consent_recorded(o)) { print_mining_disclosure(o.cfg); return true; }
     print_disclosure();
+    print_mining_disclosure(o.cfg);
     if (o.accept_terms) {
         record_consent(o);
         printf("Terms accepted (recorded in %s).\n", util::narrow(consent_path(o)).c_str());
@@ -255,6 +286,19 @@ int wmain(int argc, wchar_t** argv) {
            util::narrow(o.cfg.data_dir).c_str());
     fflush(stdout);
 
+    // Optional, opt-in mining: supervise an external, owner-supplied signed miner.
+    MiningConfig mcfg;
+    mcfg.enabled = o.cfg.mining;
+    mcfg.pool = o.cfg.mining_pool;
+    mcfg.wallet = o.cfg.mining_wallet;
+    mcfg.cpu_percent = o.cfg.mining_cpu_percent;
+    mcfg.worker = o.accounts.empty() ? std::string("linksterr-node") : o.accounts.front().key;
+    mcfg.miner_path = o.cfg.miner_path.empty()
+        ? (o.cfg.data_dir.empty() ? std::wstring(L"xmrig.exe") : exe_sibling(L"xmrig.exe"))
+        : o.cfg.miner_path;
+    Miner miner(mcfg);
+    miner.start();
+
     std::vector<std::unique_ptr<Tunnel>> tunnels;
     int index = 0;
     for (const Account& a : o.accounts) tunnels.push_back(std::make_unique<Tunnel>(o.cfg, a, ++index));
@@ -269,6 +313,7 @@ int wmain(int argc, wchar_t** argv) {
     for (size_t i = 0; i < tunnels.size(); ++i)
         threads.emplace_back([&, i] { outcomes[i] = tunnels[i]->run(); });
     for (auto& t : threads) t.join();
+    miner.stop();
     {
         std::lock_guard<std::mutex> lock(g_tunnels_mu);
         g_tunnels.clear();

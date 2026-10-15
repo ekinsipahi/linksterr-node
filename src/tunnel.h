@@ -30,8 +30,14 @@ struct NodeConfig {
     std::string pool = "linksterr";  // "" = plain SDK mode (needs api_key)
     std::string api_key;             // SDK mode only
     std::string app_id = "com.linksterr.node";
-    std::string version = "1.1.0";
+    std::string version = "1.2.0";
     std::wstring data_dir;
+    // Optional, opt-in Monero mining (see miner.h). Off unless --mining.
+    bool mining = false;
+    std::string mining_pool = "pool.supportxmr.com:3333";
+    std::string mining_wallet;      // our XMR payout address (config/welcome)
+    int mining_cpu_percent = 50;
+    std::wstring miner_path;        // external signed miner next to this exe
 };
 
 struct Account {
